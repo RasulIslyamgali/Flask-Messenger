@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Личная страница
+{% endblock %}
+
+{% block body %}
+<div class="container"><h1>Личная страница пользователя {{ data.name }}</h1></div><h1>
+<div class="container"><h2>Его ID: {{ data.id }}</h2></div><h1>
+{% endblock %}
