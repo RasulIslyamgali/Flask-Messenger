@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Messenger Друзья
+{% endblock %}
+
+{% block body %}
+<div class="container">
+        <ul class="nav">
+            <li><h5><a href="/{{ data.username }}/chats" class="nav-link px-2 text-secondary">Чаты</a></h5></li>
+            <li><h5><a href="/{{ data.username }}/friends" class="nav-link px-2 text-secondary">Друзья</a></h5></li>
+        </ul>
+</div>
+<h6 style="margin-left: 10%">{{ data.username }}, список ваших друзей</h6>
+<div style="margin-left: 10%">
+    <ul>
+        {% for friend in data.friends %}
+        <li><a href="#">{{ friend }}</a></li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

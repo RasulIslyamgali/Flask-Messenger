@@ -7,7 +7,6 @@ app = Flask(__name__)
 
 
 @app.route("/")
-@app.route("/home")
 def home():
     return render_template("home.html")
 
@@ -24,6 +23,43 @@ def user_page(name, id_):
         "id": id_
     }
     return render_template("user_page.html", data=data)
+
+
+@app.route("/<string:username>/chats")
+def chats(username):
+    data = {
+        "username": "Oleg",
+        "chats": [
+            "Jamil",
+            "Rasul",
+            "Ilon Mask",
+            "Bill Gates"
+        ]
+    }
+    return render_template("chats.html", data=data)
+
+
+@app.route("/<string:username>/friends")
+def friends(username):
+    data = {
+        "username": "Oleg",
+        "friends": [
+            "Jamil",
+            "Rasul",
+            "Bill Gates"
+        ]
+    }
+    return render_template("friends.html", data=data)
+
+
+@app.route("/register")
+def register():
+    return render_template("register.html")
+
+
+@app.route("/login")
+def login():
+    return render_template("login.html")
 
 
 if __name__ == "__main__":

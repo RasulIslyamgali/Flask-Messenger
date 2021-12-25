@@ -5,6 +5,13 @@
 {% endblock %}
 
 {% block body %}
-<div class="container"><h1>Личная страница пользователя {{ data.name }}</h1></div><h1>
-<div class="container"><h2>Его ID: {{ data.id }}</h2></div><h1>
+<div class="container"><h3>Личная страница</h3>
+<div>
+    <ul class="nav">
+        <li><h5><a href="/{{ data.name }}/chats" class="nav-link px-2 text-secondary">Чаты</a></h5></li>
+        <li><h5><a href="/{{ data.name }}/friends" class="nav-link px-2 text-secondary">Друзья</a></h5></li>
+    </ul>
+</div>
+<h2>{{ data.name }}</h2>
+</div>
 {% endblock %}
