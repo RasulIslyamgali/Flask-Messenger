@@ -1,14 +1,24 @@
-from flask import Flask, render_template, url_for
 import os
+
+from flask import Flask, render_template, url_for
+from flask_sqlalchemy import SQLAlchemy
 
 
 # path = "__main__"
 app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = "PostGresSQL"
 
 
 @app.route("/")
 def home():
-    return render_template("home.html")
+    try:
+        url = os.getenv("DATABASE_URL")
+    except:
+        url = "URL не был изъят"
+    data = {
+        "URL": url
+    }
+    return render_template("home.html", data=data)
 
 
 @app.route("/about")
