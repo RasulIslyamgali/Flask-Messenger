@@ -1,3 +1,4 @@
-from datetime import datetime
 
-print(datetime.utcnow())
+
+a = "adam".replace(__old="ad", __new="no")
+print(a)
