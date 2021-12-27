@@ -8,6 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 # path = "__main__"
 app = Flask(__name__)
 URI = os.getenv("DATABASE_URL").replace("postgres", "postgresql")
+print(f'[INFO] URI: {URI}')
 app.config["SQLALCHEMY_DATABASE_URI"] = URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
@@ -90,7 +91,8 @@ def register():
             db.session.add(user)
             db.session.commit()
             return redirect("/")
-        except:
+        except Exception as e:
+            print(f'[INFO] Register exception: {e}')
             return "При добавлении статьи произошла ошибка"
     else:
         return render_template("register.html")
