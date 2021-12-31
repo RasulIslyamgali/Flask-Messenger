@@ -34,6 +34,15 @@
       </div>
     </div>
   </header>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class=flashes>
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
     {% block body %}{% endblock %}
 
     <footer class="container row row-cols-5 py-5 my-5 border-top">
@@ -81,5 +90,6 @@
       </ul>
     </div>
   </footer>
+    <script>{% block script %}{% endblock %}</script>
 </body>
 </html>

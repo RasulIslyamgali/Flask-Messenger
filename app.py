@@ -1,25 +1,32 @@
 import os
 from datetime import datetime
 
-from flask import Flask, render_template, url_for, request, redirect
+from flask import Flask, render_template, url_for, request, redirect, flash
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
+from werkzeug.security import check_password_hash, generate_password_hash
+from dotenv import load_dotenv
 
+
+load_dotenv()  # this method required for extract data from local .env file
 
 # path = "__main__"
 app = Flask(__name__)
+app.secret_key = os.getenv("SEKRET_KEY")
+
 URI = os.getenv("DATABASE_URL").replace("postgres", "postgresql")
-print(f'[INFO] URI: {URI}')
 app.config["SQLALCHEMY_DATABASE_URI"] = URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
+login_manager = LoginManager(app)
 
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     id_ = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     lastname = db.Column(db.String(100))
     username = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(10000), nullable=False)
     date_of_birth = db.Column(db.DateTime)
     country = db.Column(db.String(100))
     email = db.Column(db.String(120), unique=True)
@@ -28,6 +35,13 @@ class User(db.Model):
     def __repr__(self):
         return f"<User username: {self.username} id: {self.id_}>"
 
+    def get_id(self):
+        return self.id_
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(user_id)
 
 
 @app.route("/")
@@ -41,6 +55,7 @@ def about():
 
 
 @app.route("/user/<string:name>/<int:id_>")
+@login_required
 def user_page(name, id_):
     data = {
         "name": name,
@@ -50,6 +65,7 @@ def user_page(name, id_):
 
 
 @app.route("/<string:username>/chats")
+@login_required
 def chats(username):
     data = {
         "username": "Oleg",
@@ -64,6 +80,7 @@ def chats(username):
 
 
 @app.route("/<string:username>/friends")
+@login_required
 def friends(username):
     data = {
         "username": "Oleg",
@@ -79,18 +96,21 @@ def friends(username):
 @app.route("/register", methods=["POST", "GET"])
 def register():
     if request.method == "POST":
-        name = request.form["name"]
-        lastname = request.form["lastname"]
-        username = request.form["username"]
-        password = request.form["password"]
-        email = request.form["email"]
+        name = request.form.get("name")
+        lastname = request.form.get("lastname")
+        username = request.form.get("username")
+        password = request.form.get("password")
+        email = request.form.get("email")
 
-        user = User(name=name, lastname=lastname, username=username, password=password, email=email)
-
+        if not (name and username and password):
+            flash("Пожалуйста заполните все необходимые поля")
+        else:
+            hash_pwd = generate_password_hash(password)
+            new_user = User(name=name, lastname=lastname, username=username, password=hash_pwd, email=email)
         try:
-            db.session.add(user)
+            db.session.add(new_user)
             db.session.commit()
-            return redirect("/")
+            return redirect(url_for("login_page"))
         except Exception as e:
             print(f'[INFO] Register exception: {e}')
             return "При добавлении статьи произошла ошибка"
@@ -98,9 +118,42 @@ def register():
         return render_template("register.html")
 
 
-@app.route("/login")
-def login():
+@app.route("/login", methods=["POST", "GET"])
+def login_page():
+    login_ = request.form.get("username")
+    password = request.form.get("password")
+
+    if login_ and password:
+        # это значит пользователь зареганный
+        user = User.query.filter_by(username=login_).first()
+
+        if user and check_password_hash(user.password, password=password):
+            login_user(user)
+
+            next_ = request.args.get("next", "/")
+            # it's return last page before redirect to login page
+            # this "next" we added in func redirect_to_sign_in
+            return redirect(next_)
+        else:
+            flash("Пожалуйста введите правильный пароль и имя пользователя")
+    else:
+        flash("Пожалуйста введите пароль и имя пользователя")
     return render_template("login.html")
+
+
+@app.route("/logout", methods=["GET", "POST"])
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for("home"))
+
+
+@app.after_request
+def redirect_to_sign_in(response):
+    if response.status_code == 401:
+        return redirect(url_for("login_page") + f"?next={request.url}")
+
+    return response
 
 
 if __name__ == "__main__":

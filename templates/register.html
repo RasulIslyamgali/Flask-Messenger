@@ -46,14 +46,8 @@
             <div class="col-12">
               <label for="password" class="form-label">Пароль</label>
               <input type="password" class="form-control" name="password" id="password" placeholder="Придумайте пароль состоящий из букв, цифр и специальных знаков">
-              <div class="invalid-feedback">
-                Valid password name is required.
-              </div>
-            </div>
-
-            <div class="col-12">
-              <label for="password2" class="form-label">Подтверждение пароля</label>
-              <input type="password" class="form-control" name="password2" id="password2" placeholder="Повторите ваш пароль">
+<!--                <label for="togglePassword">Показать</label>-->
+<!--                <input type="checkbox" id="togglePassword">-->
               <div class="invalid-feedback">
                 Valid password name is required.
               </div>
@@ -61,4 +55,20 @@
           <button class="w-100 btn btn-primary btn-lg" type="submit">Подтвердить</button>
         </form>
       </div>
+{% endblock %}
+
+{% block script %}
+const togglePassword = document.getElementById("togglePassword");
+
+const showOrHidePassword = () => {
+  const password = document.getElementById('password');
+  if (password.type === 'password') {
+    password.type = 'text';
+  } else {
+    password.type = 'password';
+  }
+};
+
+
+togglePassword.addEventListener("click", showOrHidePassword);
 {% endblock %}
