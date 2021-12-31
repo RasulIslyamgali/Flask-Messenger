@@ -106,14 +106,23 @@ def register():
             flash("Пожалуйста заполните все необходимые поля")
         else:
             hash_pwd = generate_password_hash(password)
-            new_user = User(name=name, lastname=lastname, username=username, password=hash_pwd, email=email)
+            if email:
+                new_user = User(name=name, lastname=lastname, username=username, password=hash_pwd, email=email)
+            else:
+                new_user = User(name=name, lastname=lastname, username=username, password=hash_pwd)
         try:
             db.session.add(new_user)
             db.session.commit()
             return redirect(url_for("login_page"))
         except Exception as e:
             print(f'[INFO] Register exception: {e}')
-            return "При добавлении статьи произошла ошибка"
+            if "(psycopg2.errors.UniqueViolation)" in str(e) and "user_username_key" in str(e):
+                flash("Пользователь с таким именем уже существует. Пожалуйста придумайте другую")
+            elif "psycopg2.errors.UniqueViolation" in str(e) and "user_email_key" in str(e):
+                flash("Эта почта уже используется другим пользователем. Пожалуйста выберите другую")
+            else:
+                flash("При добавлении статьи произошла ошибка")
+            return redirect(url_for("register"))
     else:
         return render_template("register.html")
 
