@@ -1,7 +1,8 @@
+import json
 import os
 from datetime import datetime
 
-from flask import Flask, render_template, url_for, request, redirect, flash
+from flask import Flask, render_template, url_for, request, redirect, flash, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -33,10 +34,19 @@ class User(db.Model, UserMixin):
     date_of_register = db.Column(db.DateTime, default=datetime.utcnow())
 
     def __repr__(self):
-        return f"<User username: {self.username} id: {self.id_}>"
+        data = {"username": self.username, "name": self.name, "id": self.id_, "lastname": self.lastname}
+        return f'{data}'
 
     def get_id(self):
         return self.id_
+
+
+@app.context_processor
+def check_user():
+    if session.get("user", None) is not None:
+        return dict(user_active=json.loads(session.get("user", None).replace("'", '"')))
+    else:
+        return dict(user_active=session.get("user", None))
 
 
 @login_manager.user_loader
@@ -54,42 +64,24 @@ def about():
     return render_template("about.html")
 
 
-@app.route("/user/<string:name>/<int:id_>")
+@app.route("/user/<string:username>/<int:id>")
 @login_required
-def user_page(name, id_):
-    data = {
-        "name": name,
-        "id": id_
-    }
+def user_page(username, id):
+    data = json.loads(session["user"].replace("'", '"'))
     return render_template("user_page.html", data=data)
 
 
 @app.route("/<string:username>/chats")
 @login_required
 def chats(username):
-    data = {
-        "username": "Oleg",
-        "chats": [
-            "Jamil",
-            "Rasul",
-            "Ilon Mask",
-            "Bill Gates"
-        ]
-    }
+    data = json.loads(session["user"].replace("'", '"'))
     return render_template("chats.html", data=data)
 
 
 @app.route("/<string:username>/friends")
 @login_required
 def friends(username):
-    data = {
-        "username": "Oleg",
-        "friends": [
-            "Jamil",
-            "Rasul",
-            "Bill Gates"
-        ]
-    }
+    data = json.loads(session["user"].replace("'", '"'))
     return render_template("friends.html", data=data)
 
 
@@ -142,6 +134,9 @@ def login_page():
             next_ = request.args.get("next", "/")
             # it's return last page before redirect to login page
             # this "next" we added in func redirect_to_sign_in
+
+            # сохраняем юзера в сессию, чтобы потом рендерить или скрыть разные части темплейтов
+            session["user"] = repr(user)
             return redirect(next_)
         else:
             flash("Пожалуйста введите правильный пароль и имя пользователя")
@@ -150,17 +145,23 @@ def login_page():
     return render_template("login.html")
 
 
-@app.route("/logout", methods=["GET", "POST"])
+@app.route("/logout", methods=["GET"])
 @login_required
 def logout():
     logout_user()
+
+    # удаляем username из session
+    del session["user"]
+
     return redirect(url_for("home"))
 
 
 @app.after_request
 def redirect_to_sign_in(response):
-    if response.status_code == 401:
+    if response.status_code == 401 and "logout" not in request.url:
         return redirect(url_for("login_page") + f"?next={request.url}")
+    elif response.status_code == 401 and "logout" in request.url:
+        return redirect(url_for("home") + f"?next={request.url}")
 
     return response
 

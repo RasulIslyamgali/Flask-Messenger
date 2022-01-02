@@ -20,7 +20,9 @@
         <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
           <li><a href="/" class="nav-link px-2 text-secondary">Главная страница</a></li>
           <li><a href="/about" class="nav-link px-2 text-white">Про нас</a></li>
-          <li><a href="/user/Jamil/34" class="nav-link px-2 text-white">Личная страница</a></li>
+          {% if user_active %}
+          <li><a href="/user/{{ user_active.username }}/{{ user_active.id }}" class="nav-link px-2 text-white">Личная страница</a></li>
+          {% endif %}
         </ul>
 
         <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3">
@@ -28,9 +30,12 @@
         </form>
 
         <div class="text-end">
-          <a href="/login" class="btn btn-outline-light me-2">Войти</a>
-          <a href="/register" class="btn btn-success">Зарегистрироваться</a>
-          <a href="/logout" class="btn btn-warning">Выйти</a>
+          {% if user_active %}
+              <a href="/logout" class="btn btn-warning">Выйти</a>
+          {% else %}
+              <a href="/login" class="btn btn-outline-light me-2">Войти</a>
+              <a href="/register" class="btn btn-success">Зарегистрироваться</a>
+          {% endif %}
         </div>
       </div>
     </div>
