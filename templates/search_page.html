@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Поиск
+{% endblock %}
+
+{% block body %}
+<div class="container col-md-7 col-lg-8">
+        <h4 class="mb-3">Поиск друзей</h4>
+        <form class="needs-validation" method="post">
+          <div class="row g-3">
+            <div class="col-sm-6">
+              <label for="firstName" class="form-label">Поиск</label>
+              <input type="text" class="form-control" name="search_query" id="search_query" placeholder="Введите имя пользователя или часть имени для поиска" value="" required="">
+              <div class="invalid-feedback">
+                Valid first name is required.
+              </div>
+            </div>
+          <button class="w-100 btn btn-primary btn-lg" type="submit">Подтвердить</button>
+        </form>
+      </div>
+{% endblock %}

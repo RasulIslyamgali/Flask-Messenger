@@ -21,16 +21,17 @@
           <li><a href="/" class="nav-link px-2 text-secondary">Главная страница</a></li>
           <li><a href="/about" class="nav-link px-2 text-white">Про нас</a></li>
           {% if user_active %}
-          <li><a href="/user/{{ user_active.username }}/{{ user_active.id }}" class="nav-link px-2 text-white">Личная страница</a></li>
+          <li><a href="/user/{{ user_active['username'] }}/{{ user_active['id_'] }}" class="nav-link px-2 text-white">Личная страница</a></li>
           {% endif %}
         </ul>
 
-        <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3">
-          <input type="search" class="form-control form-control-dark" placeholder="Поиск друзей..." aria-label="Search">
-        </form>
+<!--        <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" method="post">-->
+<!--          <input type="search" class="form-control form-control-dark" name="search_query" placeholder="Поиск друзей..." aria-label="Search">-->
+<!--        </form>-->
 
         <div class="text-end">
           {% if user_active %}
+              <a href="/search" class="btn btn-success">Поиск друзей</a>
               <a href="/logout" class="btn btn-warning">Выйти</a>
           {% else %}
               <a href="/login" class="btn btn-outline-light me-2">Войти</a>

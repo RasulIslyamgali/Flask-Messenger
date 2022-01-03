@@ -34,19 +34,114 @@ class User(db.Model, UserMixin):
     date_of_register = db.Column(db.DateTime, default=datetime.utcnow())
 
     def __repr__(self):
-        data = {"username": self.username, "name": self.name, "id": self.id_, "lastname": self.lastname}
+        data = {"model": self.__class__.__name__,
+                "username": self.username,
+                "name": self.name,
+                "id_": self.id_,
+                "lastname": self.lastname
+                }
+
         return f'{data}'
 
     def get_id(self):
         return self.id_
 
 
+class Chat(db.Model, UserMixin):
+    __tablename__ = "chat"
+
+    chat_id = db.Column(db.Integer, primary_key=True)
+    create_date = db.Column(db.DateTime, default=datetime.utcnow())
+
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id_"))
+    # user = db.relationship("User", backref=db.backref("user", uselist=False))
+
+    user_2_id = db.Column(db.Integer, db.ForeignKey("user.id_"))
+    user_2_name = db.Column(db.String(255))
+
+    def __repr__(self):
+        data = {
+            "model": self.__class__.__name__,
+            "chat_id": self.chat_id,
+            "user_id": self.user_id,
+            "user_2_id": self.user_2_id,
+            "user_2_name": self.user_2_name
+        }
+        return f"{data}"
+
+    def get_id(self):
+        return self.chat_id
+
+
+class Message(db.Model, UserMixin):
+    __tablename__  = "message"
+
+    message_id = db.Column(db.Integer, primary_key=True)
+    message_text = db.Column(db.Text, nullable=False)
+    create_date = db.Column(db.Text, default=datetime.utcnow())
+
+    chat_id = db.Column(db.Integer, db.ForeignKey("chat.chat_id"))
+    # chat = db.relationship("chat", backref=db.backref("chat", uselist=False))
+
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id_"))
+    # user = db.relationship("User", backref=db.backref("user", uselist=False))
+
+    def __repr__(self):
+        data = {
+            "model": self.__class__.__name__,
+            "message_id": self.message_id,
+            "message_text": self.message_text,
+            "chat_id": self.chat_id,
+            "user_id": self.user_id,
+            "create_date": self.create_date
+        }
+
+        return f"{data}"
+
+    def get_id(self):
+        return self.message_id
+
+
 @app.context_processor
 def check_user():
-    if session.get("user", None) is not None:
-        return dict(user_active=json.loads(session.get("user", None).replace("'", '"')))
+    """эта функция передает data к base.html
+    если user в session есть, передаются его данные
+    если нет, передается None
+    И исходя из этого какие то части base.html будут рендериться,
+    а какие то hide"""
+    data = session.get("user", None)
+
+    if data is not None:
+        return dict(user_active=json.loads(data.replace("'", '"')))
     else:
-        return dict(user_active=session.get("user", None))
+        return dict(user_active=data)
+
+
+@app.route("/search", methods=["GET", "POST"])
+def search():
+    if request.method == "POST":
+        query_text = request.form.get("search_query", None)
+        id_ = json.loads(session.get("user").replace("'", '"'))["id_"]
+        sql = f"SELECT \"user\".username, \"user\".id_ FROM \"user\" WHERE (\"user\".username LIKE '%%{query_text}%%' OR \"user\".username LIKE '{query_text}%%') AND \"user\".id_ != {id_};"
+        users = db.engine.execute(sql).all()
+        if users:
+            pass
+        else:
+            flash(f"По запросу '{query_text}' ничего не было найдено")
+            return render_template("search_page.html")
+        # удаляем поисковый запрос из request.form
+        # del request.form["search_query"]
+
+        return render_template("search_result.html", data=users)
+    else:
+        return render_template("search_page.html")
+
+
+@app.route("/chat/<string:user1>/<int:chat_id>")
+def chat_(user1, chat_id):
+    messages = Message.query.filter_by(chat_id=chat_id).order_by(Message.create_date).all()
+
+    return render_template("chat_page.html", data=messages)
 
 
 @login_manager.user_loader
@@ -64,23 +159,26 @@ def about():
     return render_template("about.html")
 
 
-@app.route("/user/<string:username>/<int:id>")
+@app.route("/user/<string:username>/<int:id_>")
 @login_required
-def user_page(username, id):
+def user_page(username, id_):
     data = json.loads(session["user"].replace("'", '"'))
     return render_template("user_page.html", data=data)
 
 
-@app.route("/<string:username>/chats")
+@app.route("/<string:username>/<int:user_id>/chats")
 @login_required
-def chats(username):
+def chats(username, user_id):
+    chats_ = Chat.query.filter_by(user_id=user_id).all()
+
     data = json.loads(session["user"].replace("'", '"'))
+    data["chats"] = chats_
     return render_template("chats.html", data=data)
 
 
-@app.route("/<string:username>/friends")
+@app.route("/<string:username>/<int:id_>/friends")
 @login_required
-def friends(username):
+def friends(username, id_):
     data = json.loads(session["user"].replace("'", '"'))
     return render_template("friends.html", data=data)
 
@@ -97,6 +195,7 @@ def register():
         if not (name and username and password):
             flash("Пожалуйста заполните все необходимые поля")
         else:
+            username = username.lower()
             hash_pwd = generate_password_hash(password)
             if email:
                 new_user = User(name=name, lastname=lastname, username=username, password=hash_pwd, email=email)
@@ -162,7 +261,22 @@ def redirect_to_sign_in(response):
         return redirect(url_for("login_page") + f"?next={request.url}")
     elif response.status_code == 401 and "logout" in request.url:
         return redirect(url_for("home") + f"?next={request.url}")
-
+    # elif request.form.get("search_query", None):
+    #     if request.form.get("search_query", None) and session.get("user"):
+    #         query_text = request.form.get("search_query", None)
+    #         id_ = json.loads(session.get("user").replace("'", '"'))["id_"]
+    #         sql = f"SELECT \"user\".username, \"user\".id_ FROM \"user\" WHERE (\"user\".username LIKE '%%{query_text}%%' OR \"user\".username LIKE '{query_text}%%') AND \"user\".id_ != {id_};"
+    #         users = db.engine.execute(sql).all()
+    #
+    #         # удаляем поисковый запрос из request.form
+    #         # del request.form["search_query"]
+    #
+    #         return render_template("search_result.html", data=users)
+    #     else:
+    #         flash("Чтобы искать людей, надо войти в систему")
+    #
+    #         next_ = request.args.get("next", "/")
+    #         return redirect(next_)
     return response
 
 

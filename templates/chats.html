@@ -7,15 +7,15 @@ Messenger Чаты
 {% block body %}
 <div class="container">
     <ul class="nav">
-        <li><h5><a href="/{{ data.username }}/chats" class="nav-link px-2 text-secondary">Чаты</a></h5></li>
-        <li><h5><a href="/{{ data.username }}/friends" class="nav-link px-2 text-secondary">Друзья</a></h5></li>
+        <li><h5><a href="/{{ data.username }}/{{ data.id_ }}/chats" class="nav-link px-2 text-secondary">Чаты</a></h5></li>
+        <li><h5><a href="/{{ data.username }}/{{ data.id_ }}/friends" class="nav-link px-2 text-secondary">Друзья</a></h5></li>
     </ul>
 </div>
 <h6 style="margin-left: 10%">{{ data.username }} тут представлены все ваши чаты</h6>
 <div style="margin-left: 10%">
     <ul>
         {% for chat in data.chats %}
-        <li><a href="#">{{ chat }}</a></li>
+        <li><a href="/chat/{{ data.username }}/{{ chat.chat_id }}">{{ chat.user_2_name }}</a></li>
         {% endfor %}
     </ul>
 </div>

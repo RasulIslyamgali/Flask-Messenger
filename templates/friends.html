@@ -7,8 +7,8 @@ Messenger Друзья
 {% block body %}
 <div class="container">
         <ul class="nav">
-            <li><h5><a href="/{{ data.username }}/chats" class="nav-link px-2 text-secondary">Чаты</a></h5></li>
-            <li><h5><a href="/{{ data.username }}/friends" class="nav-link px-2 text-secondary">Друзья</a></h5></li>
+            <li><h5><a href="/{{ data.username }}/{{ data.id_ }}/chats" class="nav-link px-2 text-secondary">Чаты</a></h5></li>
+            <li><h5><a href="/{{ data.username }}/{{ data.id_ }}/friends" class="nav-link px-2 text-secondary">Друзья</a></h5></li>
         </ul>
 </div>
 <h6 style="margin-left: 10%">{{ data.username }}, список ваших друзей</h6>
