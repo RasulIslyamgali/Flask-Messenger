@@ -7,7 +7,7 @@
 {% block body %}
 <ul>
     {% for user in data %}
-    <li>{{ user[0] }}</li>
+    <li><a href="/{{ user[0] }}/page">{{ user[0] }}</a></li>
     {% endfor %}
 </ul>
 {% endblock %}

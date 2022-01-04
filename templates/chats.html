@@ -15,7 +15,11 @@ Messenger Чаты
 <div style="margin-left: 10%">
     <ul>
         {% for chat in data.chats %}
-        <li><a href="/chat/{{ data.username }}/{{ chat.chat_id }}">{{ chat.user_2_name }}</a></li>
+        {% if chat[-3] == data.id_ %}
+        <li><a href="{{ url_for('chat_with_user', username = chat[-1]) }}">{{ chat[-1] }}</a></li>
+        {% else %}
+        <li><a href="{{ url_for('chat_with_user', username = data.users[chat[-3]]) }}">{{ data.users[chat[-3]] }}</a></li>
+        {% endif %}
         {% endfor %}
     </ul>
 </div>

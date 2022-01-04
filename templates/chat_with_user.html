@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Чат с {{ data.username }}
+{% endblock %}
+
+{% block body %}
+<h3>Чат с {{ data.username }}</h3>
+{% if data.chat_exist %}
+<ul>
+    {% for message in data.messages %}
+    {% if message[2] == data.user_2_id %}
+    <li>{{ data.username }} -- {{ message[0] }}       ----------- {{ message[1] }}</li>
+    {% else %}
+    <li>{{ data.current_user }} -- {{ message[0] }}       ----------- {{ message[1] }}</li>
+    {% endif %}
+    {% endfor %}
+</ul>
+{% else %}
+<h4>Вы пока не начали общение. Чтобы начать отправьте сообщение</h4>
+{% endif %}
+<div class="container col-md-7 col-lg-8">
+    <form class="needs-validation" method="post">
+      <div class="row g-3">
+        <div class="col-sm-6">
+          <label for="firstName" class="form-label">Написать сообщение</label>
+          <input type="text" class="form-control" name="send_message" id="send_message" placeholder="Введите ваше сообщение" value="" required="">
+          <div class="invalid-feedback">
+            Valid first name is required.
+          </div>
+        </div>
+      <button class="w-100 btn btn-primary btn-lg" type="submit">Отправить</button>
+    </form>
+</div>
+{% endblock %}

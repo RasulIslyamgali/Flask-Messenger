@@ -117,6 +117,95 @@ def check_user():
         return dict(user_active=data)
 
 
+@app.route("/chat/with/user/<string:username>", methods=["GET", "POST"])
+def chat_with_user(username):
+    user_id = json.loads(session.get("user").replace("'", '"'))["id_"]
+    current_user = json.loads(session.get("user").replace("'", '"'))["username"]
+
+    query = fr"""SELECT "user".id_ FROM "user" WHERE "user".username = '{username}';"""
+    user_2_id = db.engine.execute(query).first()[0]
+
+    if request.method == "POST":
+        message_text = request.form.get("send_message")
+        sql = fr"""SELECT "chat".chat_id, "chat".user_2_id FROM "chat" WHERE ("chat".user_2_name='{username}' AND "chat".user_id={user_id}) OR ("chat".user_id={user_2_id} AND "chat".user_2_name = '{current_user}');"""
+        # сначала получаю чат id
+        try:
+            chat_id, user_2_id = db.engine.execute(sql).first()
+        except TypeError:
+            # это если первое сообщение и чат создается
+
+            new_chat = Chat(user_id=user_id, user_2_id=user_2_id, user_2_name=username)
+            db.session.add(new_chat)
+            db.session.commit()
+
+            chat_id, user_2_id = db.engine.execute(sql).first()
+
+        new_message = Message(chat_id=chat_id, user_id=user_id, message_text=message_text)
+        db.session.add(new_message)
+        db.session.commit()
+
+        sql = fr"""SELECT "message".message_text, "message".create_date, "message".user_id FROM "message" WHERE chat_id={chat_id};"""
+        messages = db.engine.execute(sql).all()
+
+        data = {
+            "chat_exist": 1,
+            "chat_id": chat_id,
+            "username": username,  # имя собеседника
+            "messages": messages,
+            "user_2_id": user_2_id,
+            "current_user": current_user
+        }
+
+        return render_template("chat_with_user.html", data=data)
+    else:
+        print("123", username, user_id, user_2_id, current_user)
+        sql = fr"""SELECT "chat".chat_id, "chat".user_2_id FROM "chat" WHERE ("chat".user_2_name='{username}' AND "chat".user_id={user_id}) OR ("chat".user_id={user_2_id} AND "chat".user_2_name = '{current_user}');"""
+        # сначала получаю чат id
+        try:
+            chat_id, user_2_id = db.engine.execute(sql).first()
+            print("))", chat_id, user_2_id)
+        except TypeError:
+            print("++", user_2_id)
+            chat_id = None
+
+        if chat_id:
+            # если чат есть, то отображаем сообщения в нем
+            sql = fr"""SELECT "message".message_text, "message".create_date, "message".user_id FROM "message" WHERE chat_id={chat_id};"""
+            messages = db.engine.execute(sql).all()
+
+            data = {
+                "chat_exist": 1,
+                "chat_id": chat_id,
+                "username": username,  # имя собеседника
+                "messages": messages,
+                "user_2_id": user_2_id,
+                "current_user": current_user
+            }
+            return render_template("chat_with_user.html", data=data)
+        else:
+            # если чата нету, то скажем что пока сообщение нету, и попросить приветствовать, типа как в телеграме
+            data = {
+                "chat_exist": None,
+                "chat_id": chat_id,
+                "username": username,  # имя собеседника
+                "user_2_id": user_2_id,
+                "current_user": current_user
+            }
+            return render_template("chat_with_user.html", data=data)
+
+
+@app.route("/<string:username>/page")
+def some_user_page(username):
+    sql = fr"""SELECT "user".name, "user".lastname FROM "user" WHERE "user".username='{username}';"""
+    name, lastname = db.engine.execute(sql).first()
+    data = {
+        "username": username,
+        "name": name,
+        "lastname": lastname
+    }
+    return render_template("some_user_page.html", data=data)
+
+
 @app.route("/search", methods=["GET", "POST"])
 def search():
     if request.method == "POST":
@@ -169,10 +258,21 @@ def user_page(username, id_):
 @app.route("/<string:username>/<int:user_id>/chats")
 @login_required
 def chats(username, user_id):
-    chats_ = Chat.query.filter_by(user_id=user_id).all()
+    query = fr"""SELECT * FROM "chat" WHERE "chat".user_id = {user_id} OR "chat".user_2_id = {user_id} ORDER BY "chat".create_date ASC;"""
+    chats_ = db.engine.execute(query).all()
+    query_users = """SELECT "user".id_, "user".username FROM "user";"""
+    users = db.engine.execute(query_users).all()
+    users_dict = {}
+    for user in users:
+        users_dict[user[0]] = user[1]
 
+    print(users_dict)
+    print("chats", chats_)
     data = json.loads(session["user"].replace("'", '"'))
     data["chats"] = chats_
+    data["user2"] = username
+    data["users"] = users_dict
+
     return render_template("chats.html", data=data)
 
 
