@@ -9,7 +9,7 @@
 {% if data.chat_exist %}
 <ul>
     {% for message in data.messages %}
-    {% if message[2] == data.user_2_id %}
+    {% if message[2] == data.user_id %}
     <li>{{ data.current_user }} -- {{ message[0] }}       ----------- {{ message[1] }}</li>
     {% else %}
     <li>{{ data.username }} -- {{ message[0] }}       ----------- {{ message[1] }}</li>

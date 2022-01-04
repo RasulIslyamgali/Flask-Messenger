@@ -121,7 +121,7 @@ def check_user():
 def chat_with_user(username):
     user_id = json.loads(session.get("user").replace("'", '"'))["id_"]
     current_user = json.loads(session.get("user").replace("'", '"'))["username"]
-
+    print("user id is", user_id)
     query = fr"""SELECT "user".id_ FROM "user" WHERE "user".username = '{username}';"""
     user_2_id = db.engine.execute(query).first()[0]
 
@@ -146,14 +146,15 @@ def chat_with_user(username):
 
         sql = fr"""SELECT "message".message_text, "message".create_date, "message".user_id FROM "message" WHERE chat_id={chat_id};"""
         messages = db.engine.execute(sql).all()
-
+        print("messages", messages)
         data = {
             "chat_exist": 1,
             "chat_id": chat_id,
             "username": username,  # имя собеседника
             "messages": messages,
             "user_2_id": user_2_id,
-            "current_user": current_user
+            "current_user": current_user,
+            "user_id": user_id
         }
 
         return render_template("chat_with_user.html", data=data)
@@ -179,7 +180,8 @@ def chat_with_user(username):
                 "username": username,  # имя собеседника
                 "messages": messages,
                 "user_2_id": user_2_id,
-                "current_user": current_user
+                "current_user": current_user,
+                "user_id": user_id
             }
             return render_template("chat_with_user.html", data=data)
         else:
@@ -189,7 +191,8 @@ def chat_with_user(username):
                 "chat_id": chat_id,
                 "username": username,  # имя собеседника
                 "user_2_id": user_2_id,
-                "current_user": current_user
+                "current_user": current_user,
+                "user_id": user_id
             }
             return render_template("chat_with_user.html", data=data)
 
