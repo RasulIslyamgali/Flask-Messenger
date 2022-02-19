@@ -13,7 +13,7 @@ load_dotenv()  # this method required for extract data from local .env file
 
 # path = "__main__"
 app = Flask(__name__)
-app.secret_key = os.getenv("SEKRET_KEY")
+app.secret_key = os.getenv("SECRET_KEY")
 
 URI = os.getenv("DATABASE_URL").replace("postgres", "postgresql")
 app.config["SQLALCHEMY_DATABASE_URI"] = URI
@@ -157,44 +157,44 @@ def chat_with_user(username):
             "user_id": user_id
         }
 
+        return redirect(url_for("chat_with_user", username=username))
+
+    print("123", username, user_id, user_2_id, current_user)
+    sql = fr"""SELECT "chat".chat_id, "chat".user_2_id FROM "chat" WHERE ("chat".user_2_name='{username}' AND "chat".user_id={user_id}) OR ("chat".user_id={user_2_id} AND "chat".user_2_name = '{current_user}');"""
+    # сначала получаю чат id
+    try:
+        chat_id, user_2_id = db.engine.execute(sql).first()
+        print("))", chat_id, user_2_id)
+    except TypeError:
+        print("++", user_2_id)
+        chat_id = None
+
+    if chat_id:
+        # если чат есть, то отображаем сообщения в нем
+        sql = fr"""SELECT "message".message_text, "message".create_date, "message".user_id FROM "message" WHERE chat_id={chat_id};"""
+        messages = db.engine.execute(sql).all()
+
+        data = {
+            "chat_exist": 1,
+            "chat_id": chat_id,
+            "username": username,  # имя собеседника
+            "messages": messages,
+            "user_2_id": user_2_id,
+            "current_user": current_user,
+            "user_id": user_id
+        }
         return render_template("chat_with_user.html", data=data)
     else:
-        print("123", username, user_id, user_2_id, current_user)
-        sql = fr"""SELECT "chat".chat_id, "chat".user_2_id FROM "chat" WHERE ("chat".user_2_name='{username}' AND "chat".user_id={user_id}) OR ("chat".user_id={user_2_id} AND "chat".user_2_name = '{current_user}');"""
-        # сначала получаю чат id
-        try:
-            chat_id, user_2_id = db.engine.execute(sql).first()
-            print("))", chat_id, user_2_id)
-        except TypeError:
-            print("++", user_2_id)
-            chat_id = None
-
-        if chat_id:
-            # если чат есть, то отображаем сообщения в нем
-            sql = fr"""SELECT "message".message_text, "message".create_date, "message".user_id FROM "message" WHERE chat_id={chat_id};"""
-            messages = db.engine.execute(sql).all()
-
-            data = {
-                "chat_exist": 1,
-                "chat_id": chat_id,
-                "username": username,  # имя собеседника
-                "messages": messages,
-                "user_2_id": user_2_id,
-                "current_user": current_user,
-                "user_id": user_id
-            }
-            return render_template("chat_with_user.html", data=data)
-        else:
-            # если чата нету, то скажем что пока сообщение нету, и попросить приветствовать, типа как в телеграме
-            data = {
-                "chat_exist": None,
-                "chat_id": chat_id,
-                "username": username,  # имя собеседника
-                "user_2_id": user_2_id,
-                "current_user": current_user,
-                "user_id": user_id
-            }
-            return render_template("chat_with_user.html", data=data)
+        # если чата нету, то скажем что пока сообщение нету, и попросить приветствовать, типа как в телеграме
+        data = {
+            "chat_exist": None,
+            "chat_id": chat_id,
+            "username": username,  # имя собеседника
+            "user_2_id": user_2_id,
+            "current_user": current_user,
+            "user_id": user_id
+        }
+        return render_template("chat_with_user.html", data=data)
 
 
 @app.route("/<string:username>/page")
